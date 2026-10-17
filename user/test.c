@@ -1,20 +1,21 @@
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "user/user.h"
-#include "kernel/types.h"
 
 void printargs_nomut(int pid, int argc, char **argv){
     for (int argn = 0; argn < argc; argn ++) {
         for (int charn = 0; charn < strlen(argv[argn]); charn++) {
-            fprintf(2, "%d: arg %d, char  '%c'\n", pid, argn, argv[argn][charn]);
+            fprintf(2, "%d: arg %d, char '%c'\n", pid, argn, argv[argn][charn]);
         }
     }
 }
 
-void printargs_mut(int pid, int argc, char **argv){ // mutex
+void printargs_mut(int mut, int pid, int argc, char **argv){ // mutex
     for (int argn = 0; argn < argc; argn ++) {
         for (int charn = 0; charn < strlen(argv[argn]); charn++) {
-            fprintf(2, "%d: arg %d, char  '%c'\n", pid, argn, argv[argn][charn]);
+            mutex_lock(mut);
+            fprintf(2, "%d: arg %d, char '%c'\n", pid, argn, argv[argn][charn]);
+            mutex_unlock(mut);
         }
     }
 }
@@ -51,7 +52,7 @@ main(int argc, char **argv)
 
   fprintf(2, "----------mutex----------\n");
   
-  // mutex
+  int m = mutex();
 
   int pid3 = fork();
   if (pid3 < 0) {
@@ -60,7 +61,7 @@ main(int argc, char **argv)
   }
 
   if (pid3 == 0) {
-    printargs_mut(getpid(), argc, argv); // mutex
+    printargs_mut(m, getpid(), argc, argv); // mutex
     exit(0);
   }
 
@@ -71,9 +72,11 @@ main(int argc, char **argv)
   }
 
   if (pid4 == 0) {
-    printargs_mut(getpid(), argc, argv); // mutex 
+    printargs_mut(m, getpid(), argc, argv); // mutex 
     exit(0);
   }
+
+  close(m);
 
   wait(0);
   wait(0);
