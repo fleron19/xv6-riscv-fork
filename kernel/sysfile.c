@@ -558,10 +558,10 @@ sys_mutex_lock(void)
   if(f->type != FD_MUTEX)
     return -1;
   
+  acquiresleep(f->lock);
+
   printk("mutex_lock: pid %d, mutex %p\n", myproc()->pid, f->lock);
-  
-  acquiresleep(f->lock); 
-  
+   
   return 0;
 }
 
@@ -575,9 +575,9 @@ sys_mutex_unlock(void)
   if(f->type != FD_MUTEX)
     return -1;
 
-  printk("mutex_unlock: pid %d, mutex %p\n", myproc()->pid, f->lock);
-  
   releasesleep(f->lock);
+
+  printk("mutex_unlock: pid %d, mutex %p\n", myproc()->pid, f->lock);
   
   return 0;
 }
